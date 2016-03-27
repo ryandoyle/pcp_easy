@@ -30,6 +30,3 @@ DEPENDENCIES
   pcp_easy!
   rake-compiler
   rspec
-
-BUNDLED WITH
-   1.10.6
