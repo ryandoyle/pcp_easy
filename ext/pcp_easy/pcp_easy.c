@@ -35,6 +35,8 @@ static VALUE pcpeasy_agent_initialize(VALUE self, VALUE hostname_rb) {
         pcpeasy_raise_from_pmapi_error(pm_context);
     }
 
+    rb_iv_set(self, "@host", hostname_rb);
+
     /* Store away with this instance */
     pcpeasy_agent->pm_context = pm_context;
 
@@ -156,5 +158,6 @@ void Init_pcp_easy() {
     rb_define_alloc_func(pcpeasy_agent_class, pcpeasy_agent_allocate);
     rb_define_method(pcpeasy_agent_class, "initialize", pcpeasy_agent_initialize, 1);
     rb_define_method(pcpeasy_agent_class, "metric", pcpeasy_agent_metric, 1);
+    rb_define_attr(pcpeasy_agent_class, "host", 1, 0);
 
 }

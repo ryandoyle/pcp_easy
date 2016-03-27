@@ -4,6 +4,12 @@ describe PCPEasy::Agent do
 
   let(:agent) { described_class.new('localhost') }
 
+  describe '#host' do
+    it 'returns the host that the agent is connected to' do
+      expect(agent.host).to eq 'localhost'
+    end
+  end
+
   describe '#metric' do
     describe 'a single instance' do
       let(:metric) { agent.metric('sample.long.ten') }
