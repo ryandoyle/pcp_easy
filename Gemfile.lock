@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    pcp_easy (0.0.2)
+    pcp_easy (0.0.3)
 
 GEM
   specs:
