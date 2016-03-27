@@ -4,7 +4,7 @@ Gem::Specification.new do |s|
   s.summary = "Simple query interface for Performance Co-Pilot"
   s.author  = "Ryan Doyle"
 
-  s.files = Dir.glob("ext/**/*.{c,rb}") +
+  s.files = Dir.glob("ext/**/*.{c,h,rb}") +
             Dir.glob("lib/**/*.rb")
 
   s.extensions << "ext/pcp_easy/extconf.rb"
