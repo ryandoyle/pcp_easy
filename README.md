@@ -63,4 +63,38 @@ end
 
 ```
 
+## Extending and hacking
+`pcp_easy` tries to hide the internals of PCP by returning most of the information about a metric via the
+`PCPEasy::Metric` object. The C API represents this over several structs and API calls which is done
+when `PCPEasy::Agent#metric` is called.
+
+A more C-like API is currently being developed [here](https://github.com/ryandoyle/pcp/tree/ruby-bindings).
+It's unlikely that anything more than simple metric lookups will be implemented in `pcp_easy` and
+I don't really intend to make it too more feature-ful than the minimal API already is.
+
+Having said that, if there is a feature that you feel is a good place for `pcp_easy`, create an issue
+so we can decide if it fits in this API. If you want to develop locally, you will need `pcp` installed
+and running with the `sample` PMDA installed.
+
+The following is an example for a Debian-based system.
+
+```sh
+# Install development headers for pcp & ruby
+apt-get install pcp libpcp3-dev libpcp-pmda3-dev ruby-dev
+
+# Install the sample PMDA
+cd /var/lib/pcp/pmdas/sample/
+echo | sudo ./Install
+cd
+
+# Checkout the code and install dependencies
+git clone https://github.com/ryandoyle/pcp_easy-ruby.git
+cd pcp_easy-ruby
+gem install bundler
+bundle install
+
+# Run the tests
+bundle exec rake spec
+```
+
    [performance co-pilot]: <http://pcp.io/>
