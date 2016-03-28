@@ -22,7 +22,8 @@ puts metric.inspect
 #  @value=116044,
 #  @instance=nil,
 #  @semantics=:counter,
-#  @type=:uint64>
+#  @type=:uint64
+#  @units={:dimension=>:count, :count_scaling=>0}>
 
 # Metrics that have instances return an array of metrics
 metrics = agent.metric('disk.partitions.read')
@@ -33,13 +34,15 @@ puts metrics.inspect
 #    @value=177,
 #    @instance="sda1",
 #    @semantics=:counter,
-#    @type=:uint64>,
+#    @type=:uint64,
+#    @units={:dimension=>:count, :count_scaling=>0}>,
 #  <PCPEasy::Metric:0x00560b04bd4ab0
 #    @name="disk.partitions.read",
 #    @value=115805,
 #    @instance="sda5",
 #    @semantics=:counter,
-#    @type=:uint64>
+#    @type=:uint64,
+#    @units={:dimension=>:count, :count_scaling=>0}>
 #]
 ```
 

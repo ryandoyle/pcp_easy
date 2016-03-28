@@ -22,7 +22,8 @@
 #include "exceptions.h"
 
 #define READ_ONLY 1, 0
-#define CONSTRUCTOR_ARGS 5
+#define CONSTRUCTOR_ARGS 6
+#define rb_symbol_new(name) ID2SYM(rb_intern(name))
 
 VALUE pcpeasy_metric_class;
 VALUE pcpeasy_metric_semantics_counter;
@@ -44,12 +45,13 @@ VALUE pcpeasy_metric_type_event;
 VALUE pcpeasy_metric_type_highres_event;
 VALUE pcpeasy_metric_type_unknown;
 
-static VALUE initialize(VALUE self, VALUE name, VALUE value, VALUE instance, VALUE semantics, VALUE type) {
+static VALUE initialize(VALUE self, VALUE name, VALUE value, VALUE instance, VALUE semantics, VALUE type, VALUE units) {
     rb_iv_set(self, "@name", name);
     rb_iv_set(self, "@value", value);
     rb_iv_set(self, "@instance", instance);
     rb_iv_set(self, "@semantics", semantics);
     rb_iv_set(self, "@type", type);
+    rb_iv_set(self, "@units", units);
 
     return self;
 }
@@ -119,6 +121,8 @@ static VALUE equal(VALUE self, VALUE other) {
         return Qfalse;
     if(!is_field_equal("@type", self, other))
         return Qfalse;
+    if(!is_field_equal("@units", self, other))
+        return Qfalse;
 
     return Qtrue;
 }
@@ -155,6 +159,95 @@ static VALUE type(int type) {
     }
 }
 
+static VALUE units(pmUnits pm_units) {
+    VALUE units = rb_hash_new();
+    VALUE dimension = Qnil;
+
+    if(pm_units.dimSpace == 1 && pm_units.dimTime == 0 && pm_units.dimCount == 0)
+        dimension = rb_symbol_new("space");
+    if(pm_units.dimSpace == 1 && pm_units.dimTime == -1 && pm_units.dimCount == 0)
+        dimension = rb_symbol_new("space_time");
+    if(pm_units.dimSpace == 1 && pm_units.dimTime == 0 && pm_units.dimCount == -1)
+        dimension = rb_symbol_new("space_count");
+    if(pm_units.dimSpace == 0 && pm_units.dimTime == 1 && pm_units.dimCount == 0)
+        dimension = rb_symbol_new("time");
+    if(pm_units.dimSpace == -1 && pm_units.dimTime == 1 && pm_units.dimCount == 0)
+        dimension = rb_symbol_new("time_space");
+    if(pm_units.dimSpace == 0 && pm_units.dimTime == 1 && pm_units.dimCount == -1)
+        dimension = rb_symbol_new("time_count");
+    if(pm_units.dimSpace == 0 && pm_units.dimTime == 0 && pm_units.dimCount == 1)
+        dimension = rb_symbol_new("count");
+    if(pm_units.dimSpace == -1 && pm_units.dimTime == 0 && pm_units.dimCount == 1)
+        dimension = rb_symbol_new("count_space");
+    if(pm_units.dimSpace == 0 && pm_units.dimTime == -1 && pm_units.dimCount == 1)
+        dimension = rb_symbol_new("count_time");
+
+    rb_hash_aset(units, rb_symbol_new("dimension"), dimension);
+
+    if(pm_units.dimSpace != 0) {
+        VALUE scale_space;
+        switch(pm_units.scaleSpace) {
+            case PM_SPACE_BYTE:
+                scale_space = rb_symbol_new("bytes");
+                break;
+            case PM_SPACE_KBYTE:
+                scale_space = rb_symbol_new("kilobytes");
+                break;
+            case PM_SPACE_MBYTE:
+                scale_space = rb_symbol_new("megabytes");
+                break;
+            case PM_SPACE_GBYTE:
+                scale_space = rb_symbol_new("gigabytes");
+                break;
+            case PM_SPACE_TBYTE:
+                scale_space = rb_symbol_new("terabytes");
+                break;
+            case PM_SPACE_PBYTE:
+                scale_space = rb_symbol_new("petabytes");
+                break;
+            case PM_SPACE_EBYTE:
+                scale_space = rb_symbol_new("exabytes");
+                break;
+            default:
+                scale_space = Qnil;
+        }
+        rb_hash_aset(units, rb_symbol_new("space"), scale_space);
+    }
+
+    if(pm_units.dimTime != 0) {
+        VALUE scale_time;
+        switch(pm_units.scaleTime) {
+            case PM_TIME_NSEC:
+                scale_time = rb_symbol_new("nanoseconds");
+                break;
+            case PM_TIME_USEC:
+                scale_time = rb_symbol_new("microseconds");
+                break;
+            case PM_TIME_MSEC:
+                scale_time = rb_symbol_new("milliseconds");
+                break;
+            case PM_TIME_SEC:
+                scale_time = rb_symbol_new("seconds");
+                break;
+            case PM_TIME_MIN:
+                scale_time = rb_symbol_new("minutes");
+                break;
+            case PM_TIME_HOUR:
+                scale_time = rb_symbol_new("hour");
+                break;
+            default:
+                scale_time = Qnil;
+        }
+        rb_hash_aset(units, rb_symbol_new("time"), scale_time);
+    }
+
+    if(pm_units.dimCount != 0) {
+        rb_hash_aset(units, rb_symbol_new("count_scaling"), INT2NUM(pm_units.scaleCount));
+    }
+
+    return units;
+}
+
 VALUE pcpeasy_metric_new(char *metric_name, char *instance, pmValue *pm_value, pmDesc *pm_desc, int value_format) {
     VALUE args[CONSTRUCTOR_ARGS];
     args[0] = rb_tainted_str_new_cstr(metric_name);
@@ -162,6 +255,7 @@ VALUE pcpeasy_metric_new(char *metric_name, char *instance, pmValue *pm_value, p
     args[2] = instance_name(instance);
     args[3] = semantics_symbol(pm_desc->sem);
     args[4] = type(pm_desc->type);
+    args[5] = units(pm_desc->units);
 
     return rb_class_new_instance(CONSTRUCTOR_ARGS, args, pcpeasy_metric_class);
 }
@@ -195,4 +289,5 @@ void pcpeasy_metric_init(VALUE pcpeasy_class) {
     rb_define_attr(pcpeasy_metric_class, "instance", READ_ONLY);
     rb_define_attr(pcpeasy_metric_class, "semantics", READ_ONLY);
     rb_define_attr(pcpeasy_metric_class, "type", READ_ONLY);
+    rb_define_attr(pcpeasy_metric_class, "units", READ_ONLY);
 }
