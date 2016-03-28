@@ -29,7 +29,7 @@ describe PCPEasy::Agent do
       let(:metrics) { agent.metric('sample.many.int') }
 
       it 'should contain the first metric' do
-        expected = PCPEasy::Metric.new('sample.many.int', 0, 'i-0', :instant)
+        expected = PCPEasy::Metric.new('sample.many.int', 0, 'i-0', :instant, :int32)
         expect(metrics).to include(expected)
       end
     end

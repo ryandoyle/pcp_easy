@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name    = "pcp_easy"
-  s.version = "0.0.3"
+  s.version = "0.1.0"
   s.summary = "Simple query interface for Performance Co-Pilot"
   s.author  = "Ryan Doyle"
 

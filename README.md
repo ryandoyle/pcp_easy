@@ -17,13 +17,30 @@ agent = PCPEasy::Agent.new('localhost')
 # Metrics that have no instances return a single metric
 metric = agent.metric('disk.all.read')
 puts metric.inspect
-#<PCPEasy::Metric:0x00560b04bd5050 @name="disk.all.read", @value=116044, @instance=nil, @semantics=:counter>
+#<PCPEasy::Metric:0x00560b04bd5050
+#  @name="disk.all.read",
+#  @value=116044,
+#  @instance=nil,
+#  @semantics=:counter,
+#  @type=:uint64>
 
 # Metrics that have instances return an array of metrics
 metrics = agent.metric('disk.partitions.read')
 puts metrics.inspect
-#[#<PCPEasy::Metric:0x00560b04bd4c40 @name="disk.partitions.read", @value=177, @instance="sda1", @semantics=:counter>,
-#<PCPEasy::Metric:0x00560b04bd4ab0 @name="disk.partitions.read", @value=115805, @instance="sda5", @semantics=:counter>]
+#[
+#  <PCPEasy::Metric:0x00560b04bd4c40
+#    @name="disk.partitions.read",
+#    @value=177,
+#    @instance="sda1",
+#    @semantics=:counter,
+#    @type=:uint64>,
+#  <PCPEasy::Metric:0x00560b04bd4ab0
+#    @name="disk.partitions.read",
+#    @value=115805,
+#    @instance="sda5",
+#    @semantics=:counter,
+#    @type=:uint64>
+#]
 ```
 
    [performance co-pilot]: <http://pcp.io/>
