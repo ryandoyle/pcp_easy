@@ -16,19 +16,11 @@
  *
  */
 
+#ifndef PCP_EASY_RUBY_AGENT_H
+#define PCP_EASY_RUBY_AGENT_H 1
+
 #include <ruby.h>
 
-#include "exceptions.h"
-#include "metric.h"
-#include "agent.h"
+void pcpeasy_agent_init(VALUE pcpeasy_class);
 
-VALUE pcpeasy_class = Qnil;
-
-
-
-void Init_pcp_easy() {
-    pcpeasy_class = rb_define_module("PCPEasy");
-    pcpeasy_exceptions_init(pcpeasy_class);
-    pcpeasy_metric_init(pcpeasy_class);
-    pcpeasy_agent_init(pcpeasy_class);
-}
+#endif
