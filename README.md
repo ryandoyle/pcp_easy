@@ -46,4 +46,21 @@ puts metrics.inspect
 #]
 ```
 
+All `pcp_easy` exceptions extend from `PCPEasy::Error`. There is a one-to-one mapping of PCP errors
+to error classes (see: `exceptions.c`).
+
+```ruby
+require 'pcp_easy'
+
+agent = PCPEasy::Agent.new('localhost')
+begin
+  agent.metric('not.a.metric')
+  # raises PCPEasy::NameError
+rescue PCPEasy::Error
+  puts 'could not query for metric'
+  # "could not query for metric"
+end
+
+```
+
    [performance co-pilot]: <http://pcp.io/>
