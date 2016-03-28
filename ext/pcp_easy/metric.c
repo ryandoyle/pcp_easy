@@ -26,24 +26,6 @@
 #define rb_symbol_new(name) ID2SYM(rb_intern(name))
 
 VALUE pcpeasy_metric_class;
-VALUE pcpeasy_metric_semantics_counter;
-VALUE pcpeasy_metric_semantics_instant;
-VALUE pcpeasy_metric_semantics_discrete;
-VALUE pcpeasy_metric_semantics_unknown;
-
-VALUE pcpeasy_metric_type_nosupport;
-VALUE pcpeasy_metric_type_32;
-VALUE pcpeasy_metric_type_u32;
-VALUE pcpeasy_metric_type_64;
-VALUE pcpeasy_metric_type_u64;
-VALUE pcpeasy_metric_type_float;
-VALUE pcpeasy_metric_type_double;
-VALUE pcpeasy_metric_type_string;
-VALUE pcpeasy_metric_type_aggregate;
-VALUE pcpeasy_metric_type_aggregate_static;
-VALUE pcpeasy_metric_type_event;
-VALUE pcpeasy_metric_type_highres_event;
-VALUE pcpeasy_metric_type_unknown;
 
 static VALUE initialize(VALUE self, VALUE name, VALUE value, VALUE instance, VALUE semantics, VALUE type, VALUE units) {
     rb_iv_set(self, "@name", name);
@@ -59,13 +41,13 @@ static VALUE initialize(VALUE self, VALUE name, VALUE value, VALUE instance, VAL
 static VALUE semantics_symbol(int semantics) {
     switch(semantics) {
         case PM_SEM_COUNTER:
-            return pcpeasy_metric_semantics_counter;
+            return rb_symbol_new("counter");
         case PM_SEM_DISCRETE:
-            return pcpeasy_metric_semantics_discrete;
+            return rb_symbol_new("discrete");
         case PM_SEM_INSTANT:
-            return pcpeasy_metric_semantics_instant;
+            return rb_symbol_new("instant");
         default:
-            return pcpeasy_metric_semantics_unknown;
+            return Qnil;
     }
 }
 
@@ -130,32 +112,32 @@ static VALUE equal(VALUE self, VALUE other) {
 static VALUE type(int type) {
     switch(type) {
         case PM_TYPE_32:
-            return pcpeasy_metric_type_32;
+            return rb_symbol_new("int32");
         case PM_TYPE_U32:
-            return pcpeasy_metric_type_u32;
+            return rb_symbol_new("uint32");
         case PM_TYPE_64:
-            return pcpeasy_metric_type_64;
+            return rb_symbol_new("int64");
         case PM_TYPE_U64:
-            return pcpeasy_metric_type_u64;
+            return rb_symbol_new("uint64");
         case PM_TYPE_FLOAT:
-            return pcpeasy_metric_type_float;
+            return rb_symbol_new("float");
         case PM_TYPE_DOUBLE:
-            return pcpeasy_metric_type_double;
+            return rb_symbol_new("double");
         case PM_TYPE_STRING:
-            return pcpeasy_metric_type_string;
+            return rb_symbol_new("string");
         case PM_TYPE_AGGREGATE:
-            return pcpeasy_metric_type_aggregate;
+            return rb_symbol_new("aggregate");
         case PM_TYPE_AGGREGATE_STATIC:
-            return pcpeasy_metric_type_aggregate_static;
+            return rb_symbol_new("aggregate_static");
         case PM_TYPE_EVENT:
-            return pcpeasy_metric_type_event;
+            return rb_symbol_new("event");
         case PM_TYPE_HIGHRES_EVENT:
-            return pcpeasy_metric_type_highres_event;
+            return rb_symbol_new("highres_event");
         case PM_TYPE_NOSUPPORT:
-            return pcpeasy_metric_type_nosupport;
+            return rb_symbol_new("nosupport");
         case PM_TYPE_UNKNOWN:
         default:
-            return pcpeasy_metric_type_unknown;
+            return rb_symbol_new("unknown");
     }
 }
 
@@ -262,25 +244,6 @@ VALUE pcpeasy_metric_new(char *metric_name, char *instance, pmValue *pm_value, p
 
 void pcpeasy_metric_init(VALUE pcpeasy_class) {
     pcpeasy_metric_class = rb_define_class_under(pcpeasy_class, "Metric", rb_cObject);
-
-    pcpeasy_metric_semantics_counter = ID2SYM(rb_intern("counter"));
-    pcpeasy_metric_semantics_discrete = ID2SYM(rb_intern("discrete"));
-    pcpeasy_metric_semantics_instant = ID2SYM(rb_intern("instant"));
-    pcpeasy_metric_semantics_unknown = ID2SYM(rb_intern("unknown"));
-
-    pcpeasy_metric_type_nosupport = ID2SYM(rb_intern("nosupport"));
-    pcpeasy_metric_type_32 = ID2SYM(rb_intern("int32"));
-    pcpeasy_metric_type_u32 = ID2SYM(rb_intern("uint32"));
-    pcpeasy_metric_type_64 = ID2SYM(rb_intern("int64"));
-    pcpeasy_metric_type_u64 = ID2SYM(rb_intern("uint64"));
-    pcpeasy_metric_type_float = ID2SYM(rb_intern("float"));
-    pcpeasy_metric_type_double = ID2SYM(rb_intern("double"));
-    pcpeasy_metric_type_string = ID2SYM(rb_intern("string"));
-    pcpeasy_metric_type_aggregate = ID2SYM(rb_intern("aggregate"));
-    pcpeasy_metric_type_aggregate_static = ID2SYM(rb_intern("aggregate_static"));
-    pcpeasy_metric_type_event = ID2SYM(rb_intern("event"));
-    pcpeasy_metric_type_highres_event = ID2SYM(rb_intern("highres_event"));
-    pcpeasy_metric_type_unknown = ID2SYM(rb_intern("unknown"));
 
     rb_define_method(pcpeasy_metric_class, "initialize", initialize, CONSTRUCTOR_ARGS);
     rb_define_method(pcpeasy_metric_class, "==", equal, 1);
