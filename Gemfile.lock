@@ -4,6 +4,7 @@ PATH
     pcp_easy (0.2.1)
 
 GEM
+  remote: https://rubygems.org/
   specs:
     diff-lcs (1.2.5)
     rake (10.4.2)
@@ -22,6 +23,7 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.3.0)
     rspec-support (3.3.0)
+    yard (0.8.7.6)
 
 PLATFORMS
   ruby

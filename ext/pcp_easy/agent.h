@@ -21,6 +21,6 @@
 
 #include <ruby.h>
 
-void pcpeasy_agent_init(VALUE pcpeasy_class);
+void pcpeasy_agent_init(VALUE rb_cPCPEasy);
 
 #endif

@@ -22,7 +22,7 @@
 #include <ruby.h>
 #include <pcp/pmapi.h>
 
-void pcpeasy_metric_init(VALUE pcpeasy_class);
+void pcpeasy_metric_init(VALUE rb_cPCPEasy);
 VALUE pcpeasy_metric_new(char *metric_name, char *instance, pmValue *pm_value, pmDesc *pm_desc, int value_format);
 
 #endif

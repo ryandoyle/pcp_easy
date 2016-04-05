@@ -242,8 +242,8 @@ VALUE pcpeasy_metric_new(char *metric_name, char *instance, pmValue *pm_value, p
     return rb_class_new_instance(CONSTRUCTOR_ARGS, args, pcpeasy_metric_class);
 }
 
-void pcpeasy_metric_init(VALUE pcpeasy_class) {
-    pcpeasy_metric_class = rb_define_class_under(pcpeasy_class, "Metric", rb_cObject);
+void pcpeasy_metric_init(VALUE rb_cPCPEasy) {
+    pcpeasy_metric_class = rb_define_class_under(rb_cPCPEasy, "Metric", rb_cObject);
 
     rb_define_method(pcpeasy_metric_class, "initialize", initialize, CONSTRUCTOR_ARGS);
     rb_define_method(pcpeasy_metric_class, "==", equal, 1);

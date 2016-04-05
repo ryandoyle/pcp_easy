@@ -21,7 +21,7 @@
 
 #include <ruby.h>
 extern VALUE pcpeasy_error;
-void pcpeasy_exceptions_init(VALUE pcpeasy_class);
+void pcpeasy_exceptions_init(VALUE rb_cPCPEasy);
 void pcpeasy_raise_from_pmapi_error(int error_number);
 
 #endif

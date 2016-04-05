@@ -167,8 +167,8 @@ static VALUE metric(VALUE self, VALUE metric_string_rb) {
 }
 
 
-void pcpeasy_agent_init(VALUE pcpeasy_class) {
-    pcpeasy_agent_class = rb_define_class_under(pcpeasy_class, "Agent", rb_cObject);
+void pcpeasy_agent_init(VALUE rb_cPCPEasy) {
+    pcpeasy_agent_class = rb_define_class_under(rb_cPCPEasy, "Agent", rb_cObject);
 
     rb_define_alloc_func(pcpeasy_agent_class, allocate);
     rb_define_method(pcpeasy_agent_class, "initialize", initialize, 1);
