@@ -14,36 +14,28 @@ require 'pcp_easy'
 # Connect to a remote agent
 agent = PCPEasy::Agent.new('localhost')
 
-# Metrics that have no instances return a single metric
+# Metrics that have no instances return a single element array of values
 metric = agent.metric('disk.all.read')
 puts metric.inspect
 #<PCPEasy::Metric:0x00560b04bd5050
 #  @name="disk.all.read",
-#  @value=116044,
-#  @instance=nil,
+#  @values=[<PCPEasy::Metric::Value:0x007f05b2b21970 @value=116044, @instance=nil>],
 #  @semantics=:counter,
 #  @type=:uint64
 #  @units={:dimension=>:count, :count_scaling=>0}>
 
-# Metrics that have instances return an array of metrics
+# Metrics that have instances return an array of values
 metrics = agent.metric('disk.partitions.read')
 puts metrics.inspect
-#[
-#  <PCPEasy::Metric:0x00560b04bd4c40
-#    @name="disk.partitions.read",
-#    @value=177,
-#    @instance="sda1",
-#    @semantics=:counter,
-#    @type=:uint64,
-#    @units={:dimension=>:count, :count_scaling=>0}>,
-#  <PCPEasy::Metric:0x00560b04bd4ab0
-#    @name="disk.partitions.read",
-#    @value=115805,
-#    @instance="sda5",
-#    @semantics=:counter,
-#    @type=:uint64,
-#    @units={:dimension=>:count, :count_scaling=>0}>
-#]
+#<PCPEasy::Metric:0x00560b04bd4c40
+#  @name="disk.partitions.read",
+#  @values=[
+#    <PCPEasy::Metric::Value:0x007f05b2b21920 @value=177, @instance="sda1">,
+#    <PCPEasy::Metric::Value:0x007f05b2b218d0 @value=115805, @instance="sda5>,
+#  ],
+#  @semantics=:counter,
+#  @type=:uint64,
+#  @units={:dimension=>:count, :count_scaling=>0}>,
 ```
 
 All `pcp_easy` exceptions extend from `PCPEasy::Error`. There is a one-to-one mapping of PCP errors

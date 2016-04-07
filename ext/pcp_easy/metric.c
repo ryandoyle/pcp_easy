@@ -20,17 +20,17 @@
 #include <pcp/pmapi.h>
 
 #include "exceptions.h"
+#include "metric_value.h"
 
 #define READ_ONLY 1, 0
-#define CONSTRUCTOR_ARGS 6
+#define CONSTRUCTOR_ARGS 5
 #define rb_symbol_new(name) ID2SYM(rb_intern(name))
 
 VALUE pcpeasy_metric_class;
 
-static VALUE initialize(VALUE self, VALUE name, VALUE value, VALUE instance, VALUE semantics, VALUE type, VALUE units) {
+static VALUE initialize(VALUE self, VALUE name, VALUE values, VALUE semantics, VALUE type, VALUE units) {
     rb_iv_set(self, "@name", name);
-    rb_iv_set(self, "@value", value);
-    rb_iv_set(self, "@instance", instance);
+    rb_iv_set(self, "@values", values);
     rb_iv_set(self, "@semantics", semantics);
     rb_iv_set(self, "@type", type);
     rb_iv_set(self, "@units", units);
@@ -51,41 +51,6 @@ static VALUE semantics_symbol(int semantics) {
     }
 }
 
-static VALUE instance_name(char *instance) {
-    if(instance == NULL) {
-        return Qnil;
-    }
-    return rb_tainted_str_new_cstr(instance);
-}
-
-static VALUE value(int value_format, pmValue *pm_value, int type) {
-    pmAtomValue pm_atom_value;
-    int error;
-
-    if((error = pmExtractValue(value_format, pm_value, type, &pm_atom_value, type)) < 0) {
-        pcpeasy_raise_from_pmapi_error(error);
-    }
-
-    switch(type) {
-        case PM_TYPE_32:
-            return LONG2NUM(pm_atom_value.l);
-        case PM_TYPE_U32:
-            return ULONG2NUM(pm_atom_value.ul);
-        case PM_TYPE_64:
-            return LL2NUM(pm_atom_value.ll);
-        case PM_TYPE_U64:
-            return ULL2NUM(pm_atom_value.ull);
-        case PM_TYPE_FLOAT:
-            return DBL2NUM(pm_atom_value.f);
-        case PM_TYPE_DOUBLE:
-            return DBL2NUM(pm_atom_value.d);
-        case PM_TYPE_STRING:
-            return rb_tainted_str_new_cstr(pm_atom_value.vbp->vbuf);
-        default:
-            rb_raise(pcpeasy_error, "Metric type %d not supported", type);
-    }
-}
-
 static int is_field_equal(const char *name, VALUE self, VALUE other) {
     return TYPE(rb_funcall(rb_iv_get(self, name), rb_intern("=="), 1, rb_iv_get(other, name))) == T_TRUE;
 }
@@ -95,9 +60,7 @@ static VALUE equal(VALUE self, VALUE other) {
         return Qfalse;
     if(!is_field_equal("@name", self, other))
         return Qfalse;
-    if(!is_field_equal("@value", self, other))
-        return Qfalse;
-    if(!is_field_equal("@instance", self, other))
+    if(!is_field_equal("@values", self, other))
         return Qfalse;
     if(!is_field_equal("@semantics", self, other))
         return Qfalse;
@@ -230,26 +193,80 @@ static VALUE units(pmUnits pm_units) {
     return units;
 }
 
-VALUE pcpeasy_metric_new(char *metric_name, char *instance, pmValue *pm_value, pmDesc *pm_desc, int value_format) {
+
+static char* get_name_from_instance_id(int instance_id, int maximum_instances, int *instance_ids, char **instance_names) {
+    int i;
+    for(i=0; i<maximum_instances; i++) {
+        if(instance_id == instance_ids[i]) {
+            return instance_names[i];
+        }
+    }
+    return NULL;
+}
+
+static VALUE build_metric_values_for_multiple_instances(pmValueSet *pm_value_set, pmDesc pm_desc) {
+    int error, i;
+    int number_of_instances = pm_value_set->numval;
+    int *instances = NULL;
+    char **instance_names = NULL;
+    VALUE result = rb_ary_new2(number_of_instances);
+
+
+    if((error = pmGetInDom(pm_desc.indom, &instances, &instance_names)) < 0) {
+        pcpeasy_raise_from_pmapi_error(error);
+    }
+
+    for(i = 0; i < number_of_instances; i++) {
+        char *instance_name = get_name_from_instance_id(pm_value_set->vlist[i].inst, number_of_instances, instances, instance_names);
+        rb_ary_push(result, pcpeasy_metric_value_new(instance_name, pm_value_set->valfmt, &pm_value_set->vlist[i], pm_desc.type));
+    }
+
+    free(instances);
+    free(instance_names);
+
+    return result;
+}
+
+static VALUE build_metrics_values(pmValueSet *pm_value_set, pmDesc pm_desc) {
+    VALUE result = rb_ary_new2(pm_value_set->numval);
+
+    if(pm_value_set->numval > 0) {
+        if (pm_desc.indom != PM_INDOM_NULL) {
+            rb_ary_concat(result, build_metric_values_for_multiple_instances(pm_value_set, pm_desc));
+        } else {
+            return rb_ary_push(result, pcpeasy_metric_value_new(NULL, pm_value_set->valfmt, &pm_value_set->vlist[0], pm_desc.type));
+        }
+    }
+    return result;
+}
+
+VALUE pcpeasy_metric_new(char *metric_name, pmValueSet *pm_value_set) {
     VALUE args[CONSTRUCTOR_ARGS];
+    int error;
+    pmDesc pm_desc;
+
+    /* Find out how to decode the metric */
+    if((error = pmLookupDesc(pm_value_set->pmid, &pm_desc))) {
+        pcpeasy_raise_from_pmapi_error(error);
+    }
+
     args[0] = rb_tainted_str_new_cstr(metric_name);
-    args[1] = value(value_format, pm_value, pm_desc->type);
-    args[2] = instance_name(instance);
-    args[3] = semantics_symbol(pm_desc->sem);
-    args[4] = type(pm_desc->type);
-    args[5] = units(pm_desc->units);
+    args[1] = build_metrics_values(pm_value_set, pm_desc);
+    args[2] = semantics_symbol(pm_desc.sem);
+    args[3] = type(pm_desc.type);
+    args[4] = units(pm_desc.units);
 
     return rb_class_new_instance(CONSTRUCTOR_ARGS, args, pcpeasy_metric_class);
 }
 
 void pcpeasy_metric_init(VALUE rb_cPCPEasy) {
     pcpeasy_metric_class = rb_define_class_under(rb_cPCPEasy, "Metric", rb_cObject);
+    pcpeasy_metric_value_init(pcpeasy_metric_class);
 
     rb_define_method(pcpeasy_metric_class, "initialize", initialize, CONSTRUCTOR_ARGS);
     rb_define_method(pcpeasy_metric_class, "==", equal, 1);
     rb_define_attr(pcpeasy_metric_class, "name", READ_ONLY);
-    rb_define_attr(pcpeasy_metric_class, "value", READ_ONLY);
-    rb_define_attr(pcpeasy_metric_class, "instance", READ_ONLY);
+    rb_define_attr(pcpeasy_metric_class, "values", READ_ONLY);
     rb_define_attr(pcpeasy_metric_class, "semantics", READ_ONLY);
     rb_define_attr(pcpeasy_metric_class, "type", READ_ONLY);
     rb_define_attr(pcpeasy_metric_class, "units", READ_ONLY);

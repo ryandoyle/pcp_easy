@@ -16,13 +16,13 @@
  *
  */
 
-#ifndef PCPEASY_RUBY_METRIC_H
-#define PCPEASY_RUBY_METRIC_H 1
+#ifndef PCPEZ_RUBY_METRIC_VALUE_H
+#define PCPEZ_RUBY_METRIC_VALUE_H 1
 
 #include <ruby.h>
 #include <pcp/pmapi.h>
 
-void pcpeasy_metric_init(VALUE rb_cPCPEasy);
-VALUE pcpeasy_metric_new(char *metric_name, pmValueSet *pm_value_set);
+VALUE pcpeasy_metric_value_new(char *instance_name, int value_format, pmValue *pm_value, int type);
+void pcpeasy_metric_value_init(VALUE rb_cPCPEasyMetric);
 
 #endif

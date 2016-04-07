@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    pcp_easy (0.2.1)
+    pcp_easy (0.3.0)
 
 GEM
   remote: https://rubygems.org/
@@ -32,3 +32,7 @@ DEPENDENCIES
   pcp_easy!
   rake-compiler
   rspec
+  yard
+
+BUNDLED WITH
+   1.11.2

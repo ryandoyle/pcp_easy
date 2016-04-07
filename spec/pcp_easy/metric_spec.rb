@@ -3,7 +3,8 @@ require 'spec_helper'
 describe PCPEasy::Metric do
 
   let(:units) { {:dimension=>:count, :count_scaling=>0} }
-  let(:metric) { PCPEasy::Metric.new('my.metric', 123, 'inst1', :instant, :int32, units) }
+  let(:metric_values) { [double('PCPEasy::Metric::Value')] }
+  let(:metric) { PCPEasy::Metric.new('my.metric', metric_values, :instant, :int32, units) }
 
   describe '#name' do
     it 'should return the name' do
@@ -11,15 +12,9 @@ describe PCPEasy::Metric do
     end
   end
 
-  describe '#value' do
-    it 'should return the value' do
-      expect(metric.value).to eq 123
-    end
-  end
-
-  describe '#instance' do
-    it 'should return the instance' do
-      expect(metric.instance).to eq 'inst1'
+  describe '#values' do
+    it 'should return the values' do
+      expect(metric.values).to eq metric_values
     end
   end
 
@@ -43,36 +38,31 @@ describe PCPEasy::Metric do
 
   describe '#==' do
     it 'should be false for different metric names' do
-      other = PCPEasy::Metric.new('not.my.metric', 123, nil, :instant, :int32, units)
+      other = PCPEasy::Metric.new('not.my.metric', metric_values, :instant, :int32, units)
       expect(metric).to_not eq other
     end
-
     it 'should be false for different values' do
-      other = PCPEasy::Metric.new('my.metric', 456, nil, :instant, :int32, units)
+      other = PCPEasy::Metric.new('my.metric', double('Another value'), :instant, :int32, units)
       expect(metric).to_not eq other
     end
     it 'should be false for different classes' do
       other = "not a metric"
       expect(metric).to_not eq other
     end
-    it 'should be false for different instances' do
-      other = PCPEasy::Metric.new('my.metric', 123, 'inst2', :instant, :int32, units)
-      expect(metric).to_not eq other
-    end
     it 'should be false for different semantics' do
-      other = PCPEasy::Metric.new('my.metric', 123, 'inst1', :counter, :int32, units)
+      other = PCPEasy::Metric.new('my.metric', metric_values, :counter, :int32, units)
       expect(metric).to_not eq other
     end
     it 'should be false for different metric type' do
-      other = PCPEasy::Metric.new('my.metric', 123, 'inst1', :instant, :uint32, units)
+      other = PCPEasy::Metric.new('my.metric', metric_values, :instant, :uint32, units)
       expect(metric).to_not eq other
     end
     it 'should be false for different units' do
-      other = PCPEasy::Metric.new('my.metric', 123, 'inst1', :instant, :int32, :dimension=>:count, :count_scaling=>1)
+      other = PCPEasy::Metric.new('my.metric', metric_values, :instant, :int32, :dimension=>:count, :count_scaling=>1)
       expect(metric).to_not eq other
     end
     it 'should be true if the metrics are the same' do
-      other = PCPEasy::Metric.new('my.metric', 123, 'inst1', :instant, :int32, units)
+      other = PCPEasy::Metric.new('my.metric', metric_values, :instant, :int32, units)
       expect(metric).to eq other
     end
   end

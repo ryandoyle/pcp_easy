@@ -60,73 +60,13 @@ static VALUE initialize(VALUE self, VALUE hostname_rb) {
     return self;
 }
 
-static char* get_name_from_instance_id(int instance_id, int maximum_instances, int *instance_ids, char **instance_names) {
-    int i;
-    for(i=0; i<maximum_instances; i++) {
-        if(instance_id == instance_ids[i]) {
-            return instance_names[i];
-        }
-    }
-    return NULL;
-}
-
-static VALUE decode_multiple_instances(pmDesc pm_desc, pmValueSet *pm_value_set, char *metric_name) {
-    int error, i;
-    int number_of_instances = pm_value_set->numval;
-    int *instances = NULL;
-    char **instance_names = NULL;
-    VALUE result = rb_ary_new2(number_of_instances);
-
-
-    if((error = pmGetInDom(pm_desc.indom, &instances, &instance_names)) < 0) {
-        pcpeasy_raise_from_pmapi_error(error);
-    }
-
-    for(i = 0; i < number_of_instances; i++) {
-        char *instance_name = get_name_from_instance_id(pm_value_set->vlist[i].inst, number_of_instances, instances, instance_names);
-        rb_ary_push(result, pcpeasy_metric_new(metric_name, instance_name, &pm_value_set->vlist[i], &pm_desc, pm_value_set->valfmt));
-    }
-
-    free(instances);
-    free(instance_names);
-
-    return result;
-}
-
-static VALUE decode_single_instance(pmDesc pm_desc, pmValueSet *pm_value_set, char *metric_name) {
-    return pcpeasy_metric_new(metric_name, NULL, &pm_value_set->vlist[0], &pm_desc, pm_value_set->valfmt);
-}
-
-static VALUE decode_single_metric(pmID pmid, pmValueSet *pm_value_set, char *metric_name) {
-    int error;
-    pmDesc pm_desc;
-
-    /* No values, bail out */
-    if(pm_value_set->numval == 0) {
-        return Qnil;
-    }
-
-    /* Find out how to decode the metric */
-    if((error = pmLookupDesc(pmid, &pm_desc))) {
-        pcpeasy_raise_from_pmapi_error(error);
-    }
-
-    /* Do we have instances? */
-    if(pm_desc.indom == PM_INDOM_NULL) {
-        return decode_single_instance(pm_desc, pm_value_set, metric_name);
-    } else {
-        return decode_multiple_instances(pm_desc, pm_value_set, metric_name);
-    }
-
-}
-
-static VALUE decode_pm_result(pmID pmid, pmResult *pm_result, char *metric_name) {
+static VALUE decode_pm_result(pmResult *pm_result, char *metric_name) {
     /* No values (or somehow more than 1) */
     if (pm_result->numpmid != 1) {
         return Qnil;
     }
 
-    return decode_single_metric(pmid, pm_result->vset[0], metric_name);
+    return pcpeasy_metric_new(metric_name, pm_result->vset[0]);
 }
 
 static VALUE metric(VALUE self, VALUE metric_string_rb) {
@@ -160,7 +100,7 @@ static VALUE metric(VALUE self, VALUE metric_string_rb) {
     }
 
     /* Decode the result */
-    result = decode_pm_result(pmid, pm_result, metric_name);
+    result = decode_pm_result(pm_result, metric_name);
     pmFreeResult(pm_result);
 
     return result;

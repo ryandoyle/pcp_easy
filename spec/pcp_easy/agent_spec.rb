@@ -15,10 +15,10 @@ describe PCPEasy::Agent do
       let(:metric) { agent.metric('sample.long.ten') }
 
       it 'should return the correct value' do
-        expect(metric.value).to eq 10
+        expect(metric.values.first.value).to eq 10
       end
       it 'should have a nil instance' do
-        expect(metric.instance).to eq nil
+        expect(metric.values.first.instance).to eq nil
       end
       it 'should have the correct semantics' do
         expect(metric.semantics).to eq :instant
@@ -29,8 +29,8 @@ describe PCPEasy::Agent do
       let(:metrics) { agent.metric('sample.many.int') }
 
       it 'should contain the first metric' do
-        expected = PCPEasy::Metric.new('sample.many.int', 0, 'i-0', :instant, :int32, {:dimension=>:count, :count_scaling=>0})
-        expect(metrics).to include(expected)
+        expected_value = PCPEasy::Metric::Value.new(0, 'i-0')
+        expect(metrics.values).to include(expected_value)
       end
     end
   end
