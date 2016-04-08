@@ -69,49 +69,59 @@ static VALUE decode_pm_result(pmResult *pm_result, char *metric_name, int contex
     return pcpeasy_metric_new(metric_name, pm_result->vset[0], context);
 }
 
-static VALUE metric(VALUE self, VALUE metric_string_rb) {
+static VALUE metric(VALUE self, VALUE metric_strings) {
     /* Get our context */
     PcpEasyAgent *pcpeasy_agent;
+    long number_of_metrics = RARRAY_LEN(metric_strings);
     Data_Get_Struct(self, PcpEasyAgent, pcpeasy_agent);
     pmUseContext(pcpeasy_agent->pm_context);
 
     /* Get the pmID */
-    int error;
-    pmID pmid;
-    pmID *pmid_list = ALLOC(pmID);
-    char **metric_list = ALLOC(char*);
-    char *metric_name = StringValueCStr(metric_string_rb);
-    metric_list[0] = metric_name;
+    int error, i;
+    pmID *pmid_list = ALLOC_N(pmID, number_of_metrics);
+    char **metric_list = ALLOC_N(char*, number_of_metrics);
+    for(i = 0; i < number_of_metrics; i++) {
+        metric_list[i] = RSTRING_PTR(rb_ary_entry(metric_strings, i));
+    }
     if((error = pmLookupName(1, metric_list, pmid_list)) < 0) {
         xfree(pmid_list);
         xfree(metric_list);
         pcpeasy_raise_from_pmapi_error(error);
     }
-    pmid = pmid_list[0];
-    xfree(pmid_list);
-    xfree(metric_list);
 
 
     /* Do the fetch */
     pmResult *pm_result;
     VALUE result;
-    if((error = pmFetch(1, &pmid, &pm_result))) {
+    if((error = pmFetch(number_of_metrics, pmid_list, &pm_result))) {
+        xfree(pmid_list);
+        xfree(metric_list);
         pcpeasy_raise_from_pmapi_error(error);
     }
 
+
     /* Decode the result */
-    result = decode_pm_result(pm_result, metric_name, pcpeasy_agent->pm_context);
+    result = decode_pm_result(pm_result, metric_list[0], pcpeasy_agent->pm_context);
     pmFreeResult(pm_result);
+
+    xfree(pmid_list);
+    xfree(metric_list);
 
     return result;
 }
 
+static VALUE single_metric(VALUE self, VALUE metric_string_rb) {
+    VALUE query = rb_ary_new2(1);
+    rb_ary_push(query, metric_string_rb);
+
+    return metric(self, query);
+}
 
 void pcpeasy_agent_init(VALUE rb_cPCPEasy) {
     pcpeasy_agent_class = rb_define_class_under(rb_cPCPEasy, "Agent", rb_cObject);
 
     rb_define_alloc_func(pcpeasy_agent_class, allocate);
     rb_define_method(pcpeasy_agent_class, "initialize", initialize, 1);
-    rb_define_method(pcpeasy_agent_class, "metric", metric, 1);
+    rb_define_method(pcpeasy_agent_class, "metric", single_metric, 1);
     rb_define_attr(pcpeasy_agent_class, "host", 1, 0);
 }
