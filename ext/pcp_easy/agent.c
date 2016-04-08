@@ -60,13 +60,13 @@ static VALUE initialize(VALUE self, VALUE hostname_rb) {
     return self;
 }
 
-static VALUE decode_pm_result(pmResult *pm_result, char *metric_name) {
+static VALUE decode_pm_result(pmResult *pm_result, char *metric_name, int context) {
     /* No values (or somehow more than 1) */
     if (pm_result->numpmid != 1) {
         return Qnil;
     }
 
-    return pcpeasy_metric_new(metric_name, pm_result->vset[0]);
+    return pcpeasy_metric_new(metric_name, pm_result->vset[0], context);
 }
 
 static VALUE metric(VALUE self, VALUE metric_string_rb) {
@@ -100,7 +100,7 @@ static VALUE metric(VALUE self, VALUE metric_string_rb) {
     }
 
     /* Decode the result */
-    result = decode_pm_result(pm_result, metric_name);
+    result = decode_pm_result(pm_result, metric_name, pcpeasy_agent->pm_context);
     pmFreeResult(pm_result);
 
     return result;

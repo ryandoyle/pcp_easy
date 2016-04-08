@@ -23,6 +23,6 @@
 #include <pcp/pmapi.h>
 
 void pcpeasy_metric_init(VALUE rb_cPCPEasy);
-VALUE pcpeasy_metric_new(char *metric_name, pmValueSet *pm_value_set);
+VALUE pcpeasy_metric_new(char *metric_name, pmValueSet *pm_value_set, int context);
 
 #endif

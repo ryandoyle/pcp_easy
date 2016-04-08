@@ -240,12 +240,13 @@ static VALUE build_metrics_values(pmValueSet *pm_value_set, pmDesc pm_desc) {
     return result;
 }
 
-VALUE pcpeasy_metric_new(char *metric_name, pmValueSet *pm_value_set) {
+VALUE pcpeasy_metric_new(char *metric_name, pmValueSet *pm_value_set, int context) {
     VALUE args[CONSTRUCTOR_ARGS];
     int error;
     pmDesc pm_desc;
 
     /* Find out how to decode the metric */
+    pmUseContext(context);
     if((error = pmLookupDesc(pm_value_set->pmid, &pm_desc))) {
         pcpeasy_raise_from_pmapi_error(error);
     }
