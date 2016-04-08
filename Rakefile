@@ -8,3 +8,5 @@ spec = Gem::Specification.load('pcp_easy.gemspec')
 Rake::ExtensionTask.new('pcp_easy', spec)
 
 Bundler::GemHelper.install_tasks
+
+task :spec => :compile
