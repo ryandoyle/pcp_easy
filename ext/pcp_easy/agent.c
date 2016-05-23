@@ -29,6 +29,17 @@ typedef struct {
     int pm_context;
 } PcpEasyAgent;
 
+typedef struct {
+    char **names;
+    pmID *pmids;
+    int number_of_names;
+} PcpEasyNames;
+
+static void free_metric_names(PcpEasyNames names) {
+    xfree(names.names);
+    xfree(names.pmids);
+}
+
 static void deallocate(void *untyped_pcpeasy_agent) {
     PcpEasyAgent *pcpqz_agent = (PcpEasyAgent*)untyped_pcpeasy_agent;
     pmDestroyContext(pcpqz_agent->pm_context);
@@ -60,61 +71,84 @@ static VALUE initialize(VALUE self, VALUE hostname_rb) {
     return self;
 }
 
-static VALUE decode_pm_result(pmResult *pm_result, char *metric_name, int context) {
-    /* No values (or somehow more than 1) */
-    if (pm_result->numpmid != 1) {
-        return Qnil;
+static char* lookup_metric_name_from_pmid(pmID pmid, PcpEasyNames names) {
+    int i;
+    for (i = 0; i < names.number_of_names; i++) {
+        if(names.pmids[i] == pmid) {
+            return names.names[i];
+        }
     }
+    return NULL;
+}
 
-    return pcpeasy_metric_new(metric_name, pm_result->vset[0], context);
+static PcpEasyNames get_metric_names(VALUE metric_strings) {
+    /* Get the pmID */
+    int error, i;
+    PcpEasyNames names;
+    names.number_of_names = RARRAY_LENINT(metric_strings);
+    names.pmids = ALLOC_N(pmID, names.number_of_names);
+    names.names = ALLOC_N(char*, names.number_of_names);
+    for(i = 0; i < names.number_of_names; i++) {
+        VALUE metric_string = rb_ary_entry(metric_strings, i);
+        if(TYPE(metric_string) != T_STRING) {
+            free_metric_names(names);
+            rb_raise(rb_eArgError, "metric name must be a String");
+        }
+        names.names[i] = RSTRING_PTR(metric_string);
+    }
+    if((error = pmLookupName(names.number_of_names, names.names, names.pmids)) < 0) {
+        free_metric_names(names);
+        pcpeasy_raise_from_pmapi_error(error);
+    }
+    return names;
 }
 
 static VALUE metric(VALUE self, VALUE metric_strings) {
-    /* Get our context */
     PcpEasyAgent *pcpeasy_agent;
-    long number_of_metrics = RARRAY_LEN(metric_strings);
+    PcpEasyNames names;
+    int error, i;
+    pmResult *pm_result;
+    VALUE result;
+
+    /* Check args */
+    if(TYPE(metric_strings) != T_ARRAY) {
+        rb_raise(rb_eArgError, "metric names must be an Array");
+    }
+
+    /* Get our context */
     Data_Get_Struct(self, PcpEasyAgent, pcpeasy_agent);
     pmUseContext(pcpeasy_agent->pm_context);
 
     /* Get the pmID */
-    int error, i;
-    pmID *pmid_list = ALLOC_N(pmID, number_of_metrics);
-    char **metric_list = ALLOC_N(char*, number_of_metrics);
-    for(i = 0; i < number_of_metrics; i++) {
-        metric_list[i] = RSTRING_PTR(rb_ary_entry(metric_strings, i));
-    }
-    if((error = pmLookupName(1, metric_list, pmid_list)) < 0) {
-        xfree(pmid_list);
-        xfree(metric_list);
-        pcpeasy_raise_from_pmapi_error(error);
-    }
-
+    names = get_metric_names(metric_strings);
 
     /* Do the fetch */
-    pmResult *pm_result;
-    VALUE result;
-    if((error = pmFetch(number_of_metrics, pmid_list, &pm_result))) {
-        xfree(pmid_list);
-        xfree(metric_list);
+
+    if((error = pmFetch(names.number_of_names, names.pmids, &pm_result))) {
+        free_metric_names(names);
         pcpeasy_raise_from_pmapi_error(error);
     }
 
-
     /* Decode the result */
-    result = decode_pm_result(pm_result, metric_list[0], pcpeasy_agent->pm_context);
+    result = rb_ary_new2(pm_result->numpmid);
+    for(i = 0; i < pm_result->numpmid;  i++) {
+        char *metric_name = lookup_metric_name_from_pmid(pm_result->vset[i]->pmid, names);
+        rb_ary_push(result, pcpeasy_metric_new(metric_name, pm_result->vset[i], pcpeasy_agent->pm_context));
+    }
     pmFreeResult(pm_result);
-
-    xfree(pmid_list);
-    xfree(metric_list);
+    free_metric_names(names);
 
     return result;
 }
 
 static VALUE single_metric(VALUE self, VALUE metric_string_rb) {
     VALUE query = rb_ary_new2(1);
+    VALUE result;
     rb_ary_push(query, metric_string_rb);
 
-    return metric(self, query);
+    result = metric(self, query);
+
+    return RARRAY_AREF(result, 0);
 }
 
 void pcpeasy_agent_init(VALUE rb_cPCPEasy) {
@@ -123,5 +157,6 @@ void pcpeasy_agent_init(VALUE rb_cPCPEasy) {
     rb_define_alloc_func(pcpeasy_agent_class, allocate);
     rb_define_method(pcpeasy_agent_class, "initialize", initialize, 1);
     rb_define_method(pcpeasy_agent_class, "metric", single_metric, 1);
+    rb_define_method(pcpeasy_agent_class, "metrics", metric, 1);
     rb_define_attr(pcpeasy_agent_class, "host", 1, 0);
 }
