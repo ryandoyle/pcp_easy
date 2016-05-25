@@ -1,15 +1,15 @@
 PATH
   remote: .
   specs:
-    pcp_easy (0.3.0)
+    pcp_easy (2.0.0)
+      ffi
 
 GEM
   remote: https://rubygems.org/
   specs:
     diff-lcs (1.2.5)
-    rake (10.4.2)
-    rake-compiler (0.9.5)
-      rake
+    ffi (1.9.10)
+    rake (11.1.2)
     rspec (3.3.0)
       rspec-core (~> 3.3.0)
       rspec-expectations (~> 3.3.0)
@@ -30,7 +30,7 @@ PLATFORMS
 
 DEPENDENCIES
   pcp_easy!
-  rake-compiler
+  rake
   rspec
   yard
 

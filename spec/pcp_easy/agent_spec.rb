@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe PCPEasy::Agent do
+describe PCPEasy::Agent, :disabled => true do
 
   let(:agent) { described_class.new('localhost') }
 

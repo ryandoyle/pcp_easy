@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe PCPEasy::Metric do
+describe PCPEasy::Metric, :disabled => true do
 
   let(:units) { {:dimension=>:count, :count_scaling=>0} }
   let(:metric_values) { [double('PCPEasy::Metric::Value')] }

@@ -1,4 +1,9 @@
+$:.unshift File.expand_path(File.dirname(__FILE__) + '../lib')
 require 'pcp_easy'
+
+RSpec.configure do |config|
+  config.filter_run_excluding :disabled => true
+end
 
 RSpec::Matchers.define :have_the_value do |expected|
   match do |actual|
