@@ -14,6 +14,7 @@ module PCPEasy
     attach_function :pmUseContext, [:int], :void
     attach_function :pmLookupName, [:int, :pointer, :pointer], :int
     attach_function :pmLookupDesc, [:pmid, :pointer], :int
+    attach_function :pmDestroyContext, [:int], :int
   end
 
   class PMAPI
@@ -45,6 +46,7 @@ module PCPEasy
     def initialize(host)
       @context = FFIInternal.pmNewContext PM_CONTEXT_HOST, host
       raise PCPEasy::Error.new(@context) if @context < 0
+      ObjectSpace.define_finalizer(self, self.class.finalize(@context) )
     end
 
     def self.pmErrStr(number)
@@ -79,6 +81,10 @@ module PCPEasy
 
     def pmUseContext
       FFIInternal.pmUseContext @context
+    end
+
+    def self.finalize(context)
+      proc { FFIInternal.pmDestroyContext(context) }
     end
 
 
