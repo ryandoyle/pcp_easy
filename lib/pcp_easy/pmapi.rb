@@ -1,6 +1,7 @@
 require 'ffi'
 require 'pcp_easy/error'
 require 'pcp_easy/pmapi/pm_desc'
+require 'pcp_easy/pmapi/pm_result'
 
 module PCPEasy
   module FFIInternal
@@ -15,6 +16,8 @@ module PCPEasy
     attach_function :pmLookupName, [:int, :pointer, :pointer], :int
     attach_function :pmLookupDesc, [:pmid, :pointer], :int
     attach_function :pmDestroyContext, [:int], :int
+    attach_function :pmFetch, [:int, :pointer, :pointer], :int
+    attach_function :pmFreeResult, [:pointer], :void
   end
 
   class PMAPI
@@ -75,6 +78,21 @@ module PCPEasy
       raise PCPEasy::Error.new(error_code) if error_code < 0
 
       pm_desc
+    end
+
+    def pmFetch(pmids)
+      pmUseContext
+
+      pmids_ptr = FFI::MemoryPointer.new(:uint, pmids.size)
+      pmids_ptr.write_array_of_uint pmids
+      pm_result_ptr = FFI::MemoryPointer.new :pointer
+
+      error_code = FFIInternal.pmFetch(pmids.size, pmids_ptr, pm_result_ptr)
+      raise PCPEasy::Error.new(error_code) if error_code < 0
+
+      pm_result_ptr = FFI::AutoPointer.new(pm_result_ptr.get_pointer(0), FFIInternal.method(:pmFreeResult))
+
+      PCPEasy::PMAPI::PmResult.new(pm_result_ptr)
     end
 
     private

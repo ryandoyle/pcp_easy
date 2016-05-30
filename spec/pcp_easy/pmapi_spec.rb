@@ -3,6 +3,7 @@ require 'spec_helper'
 describe PCPEasy::PMAPI, :group => :integration do
 
   let(:pmapi) { described_class.new('localhost') }
+  let(:sample_many_int) { 121634896 }
 
   describe '#pmLookupName' do
     it 'returns the pmids for names' do
@@ -20,6 +21,25 @@ describe PCPEasy::PMAPI, :group => :integration do
       pm_desc[:units] = 1048576
 
       expect(pmapi.pmLookupDesc(251658264)).to eq pm_desc
+    end
+  end
+
+  describe '#pmFetch' do
+    it 'returns a PmResult with the correct number of pmids' do
+      result = pmapi.pmFetch([sample_many_int])
+      expect(result.numpmid).to eq 1
+    end
+    it 'returns a PmValueSet with the correct number of values' do
+      result = pmapi.pmFetch([sample_many_int])
+      expect(result.vset[0].numval).to eq 5
+    end
+    it 'returns a PmResult with the correct instance ID' do
+      result = pmapi.pmFetch([sample_many_int])
+      expect(result.vset[0].vlist[1].inst).to eq 1
+    end
+    it 'returns a PmResult with the correct value' do
+      result = pmapi.pmFetch([sample_many_int])
+      expect(result.vset[0].vlist[1].value.lval).to eq 1
     end
   end
 
