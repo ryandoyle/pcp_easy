@@ -9,6 +9,7 @@ module PCPEasy
     ffi_lib 'libpcp.so.3'
 
     typedef :uint, :pmid
+    typedef :uint, :indom
 
     attach_function :pmNewContext, [:int, :string], :int
     attach_function :pmErrStr_r, [:int, :pointer, :int], :string
@@ -18,6 +19,7 @@ module PCPEasy
     attach_function :pmDestroyContext, [:int], :int
     attach_function :pmFetch, [:int, :pointer, :pointer], :int
     attach_function :pmFreeResult, [:pointer], :void
+    attach_function :pmGetInDom, [:indom, :pointer, :pointer], :int
   end
 
   class PMAPI
@@ -93,6 +95,20 @@ module PCPEasy
       pm_result_ptr = FFI::AutoPointer.new(pm_result_ptr.get_pointer(0), FFIInternal.method(:pmFreeResult))
 
       PCPEasy::PMAPI::PmResult.new(pm_result_ptr)
+    end
+
+    def pmGetInDom(indom)
+      pmUseContext
+
+      internal_ids = FFI::MemoryPointer.new :pointer
+      external_names = FFI::MemoryPointer.new :pointer
+
+      error_or_num_results = FFIInternal.pmGetInDom indom, internal_ids, external_names
+      raise PCPEasy::Error.new(error_or_num_results) if error_or_num_results < 0
+
+      ids = internal_ids.get_pointer(0).get_array_of_int(0, error_or_num_results)
+      names = external_names.get_pointer(0).get_array_of_string(0, error_or_num_results)
+      Hash[ids.zip(names)]
     end
 
     private

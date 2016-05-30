@@ -4,6 +4,7 @@ describe PCPEasy::PMAPI, :group => :integration do
 
   let(:pmapi) { described_class.new('localhost') }
   let(:sample_many_int) { 121634896 }
+  let(:sample_many_int_indom) { 121634824 }
 
   describe '#pmLookupName' do
     it 'returns the pmids for names' do
@@ -40,6 +41,15 @@ describe PCPEasy::PMAPI, :group => :integration do
     it 'returns a PmResult with the correct value' do
       result = pmapi.pmFetch([sample_many_int])
       expect(result.vset[0].vlist[1].value.lval).to eq 1
+    end
+  end
+
+  describe '#pmGetInDom' do
+    it 'returns the instance IDs and text strings' do
+      expect(pmapi.pmGetInDom(sample_many_int_indom)).to eq 0 => 'i-0', 1 => 'i-1', 2 => 'i-2', 3 => 'i-3', 4 => 'i-4'
+    end
+    it 'raises an error for invalid indomns' do
+      expect{pmapi.pmGetInDom(123)}.to raise_error PCPEasy::Error
     end
   end
 
