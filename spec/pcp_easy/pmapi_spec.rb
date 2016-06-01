@@ -5,6 +5,14 @@ describe PCPEasy::PMAPI, :group => :integration do
   let(:pmapi) { described_class.new('localhost') }
   let(:sample_many_int) { 121634896 }
   let(:sample_many_int_indom) { 121634824 }
+  let(:sample_ulonglong_million) { 121634917 }
+  let(:sample_longlong_million) { 121634839 }
+  let(:sample_long_million) { 121634829 }
+  let(:sample_ulong_million) { 121634912 }
+  let(:sample_float_million) { 121634834 }
+  let(:sample_double_million) { 121634844 }
+  let(:sample_string_hullo) { 121634847 }
+  let(:sample_aggregate_hullo) { 121634850 }
 
   describe '#pmLookupName' do
     it 'returns the pmids for names' do
@@ -53,6 +61,40 @@ describe PCPEasy::PMAPI, :group => :integration do
     end
   end
 
+  describe '#pmExtractValue' do
+
+    def value_for(metric)
+      pm_desc = pmapi.pmLookupDesc(metric)
+      pm_value_set = pmapi.pmFetch([metric]).vset[0]
+      pmapi.pmExtractValue(pm_value_set.valfmt, pm_desc, pm_value_set.vlist[0])
+    end
+
+    it 'extracts a long' do
+      expect(value_for(sample_long_million)).to eq 1_000_000
+    end
+    it 'extracts a ulong' do
+      expect(value_for(sample_ulong_million)).to eq 1_000_000
+    end
+    it 'extracts a longlong' do
+      expect(value_for(sample_longlong_million)).to eq 1_000_000
+    end
+    it 'extracts a ulonglong' do
+      expect(value_for(sample_ulonglong_million)).to eq 1_000_000
+    end
+    it 'extracts a float' do
+      expect(value_for(sample_float_million)).to eq 1_000_000
+    end
+    it 'extracts a double' do
+      expect(value_for(sample_double_million)).to eq 1_000_000
+    end
+    it 'extracts a string' do
+      expect(value_for(sample_string_hullo)).to eq 'hullo world!'
+    end
+    it 'raises an error for other types' do
+      expect{value_for(sample_aggregate_hullo)}.to raise_error ArgumentError
+    end
+  end
+
 end
 
 describe PCPEasy::PMAPI do
@@ -83,6 +125,48 @@ describe PCPEasy::PMAPI do
       allow(FFI::MemoryPointer).to receive(:new).with(:char, PCPEasy::PMAPI::PM_MAXERRMSGLEN).and_return buffer
       allow(PCPEasy::FFIInternal).to receive(:pmErrStr_r).with(123, buffer, PCPEasy::PMAPI::PM_MAXERRMSGLEN).and_return 'my error'
       expect(described_class.pmErrStr(123)).to eq 'my error'
+    end
+  end
+
+  describe '#pmExtractValue' do
+
+    before do
+      allow(PCPEasy::FFIInternal).to receive(:pmExtractValue).and_return 0
+    end
+
+    it 'frees strings when the metric is a string' do
+      pm_desc = double('PmDesc', :type => PCPEasy::PMAPI::PM_TYPE_STRING)
+      pm_value = double('PmValue', :pointer => nil)
+      pm_atom_value_cp = double('Poiner', :read_string => 'derps')
+      pm_atom_value = double('PmAtomValue', :cp => pm_atom_value_cp, :pointer => nil)
+      allow(PCPEasy::PMAPI::PmAtomValue).to receive(:new).and_return pm_atom_value
+
+      expect(PCPEasy::LibC).to receive(:free).with(pm_atom_value_cp)
+
+      described_class.pmExtractValue(PCPEasy::PMAPI::PM_VAL_DPTR, pm_desc, pm_value)
+    end
+    it 'raises an error for unsupported metrics' do
+      pm_desc = double('PmDesc', :type => PCPEasy::PMAPI::PM_TYPE_AGGREGATE)
+      pm_value = double('PmValue', :pointer => nil)
+      pm_atom_value = double('PmAtomValue', :vbp => nil, :pointer => nil)
+      allow(PCPEasy::PMAPI::PmAtomValue).to receive(:new).and_return pm_atom_value
+
+      expect{described_class.pmExtractValue(PCPEasy::PMAPI::PM_VAL_DPTR, pm_desc, pm_value)}.to raise_error ArgumentError
+    end
+    it 'frees any pmValueBlock' do
+      pm_desc = double('PmDesc', :type => PCPEasy::PMAPI::PM_TYPE_AGGREGATE)
+      pm_value = double('PmValue', :pointer => nil)
+      pm_atom_value_vbp = double('Poiner')
+      pm_atom_value = double('PmAtomValue', :vbp => pm_atom_value_vbp, :pointer => nil)
+      allow(PCPEasy::PMAPI::PmAtomValue).to receive(:new).and_return pm_atom_value
+
+      expect(PCPEasy::LibC).to receive(:free).with(pm_atom_value_vbp)
+
+      begin
+      described_class.pmExtractValue(PCPEasy::PMAPI::PM_VAL_DPTR, pm_desc, pm_value)
+      rescue ArgumentError
+      end
+
     end
   end
 

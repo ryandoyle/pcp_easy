@@ -2,6 +2,8 @@ require 'ffi'
 require 'pcp_easy/error'
 require 'pcp_easy/pmapi/pm_desc'
 require 'pcp_easy/pmapi/pm_result'
+require 'pcp_easy/pmapi/pm_value'
+require 'pcp_easy/pmapi/pm_atom_value'
 
 module PCPEasy
   module FFIInternal
@@ -20,9 +22,16 @@ module PCPEasy
     attach_function :pmFetch, [:int, :pointer, :pointer], :int
     attach_function :pmFreeResult, [:pointer], :void
     attach_function :pmGetInDom, [:indom, :pointer, :pointer], :int
+    attach_function :pmExtractValue, [:int, PMAPI::PmValue, :int, PMAPI::PmAtomValue, :int], :int
+  end
+  module LibC
+    extend FFI::Library
+    ffi_lib FFI::Library::LIBC
+    attach_function :free, [:pointer], :void
   end
 
   class PMAPI
+    extend Forwardable
 
     PM_CONTEXT_HOST = 1
 
@@ -42,11 +51,18 @@ module PCPEasy
     PM_TYPE_HIGHRES_EVENT = 10
     PM_TYPE_UNKNOWN	      = 255
 
+    PM_VAL_INSITU	= 0
+    PM_VAL_DPTR	= 1
+    PM_VAL_SPTR	= 2
+
+
     PM_INDOM_NULL	= 0xffffffff
 
     PM_SEM_COUNTER  = 1
     PM_SEM_INSTANT  = 3
     PM_SEM_DISCRETE = 4
+
+    def_delegator self, :pmExtractValue
 
     def initialize(host)
       @context = FFIInternal.pmNewContext PM_CONTEXT_HOST, host
@@ -111,6 +127,38 @@ module PCPEasy
       Hash[ids.zip(names)]
     end
 
+    def self.pmExtractValue(value_format, pm_desc, pm_value)
+
+      atom = PCPEasy::PMAPI::PmAtomValue.new
+      error_code = FFIInternal.pmExtractValue(value_format, pm_value.pointer, pm_desc.type, atom.pointer, pm_desc.type)
+      raise PCPEasy::Error.new(error_code) if error_code < 0
+
+      case pm_desc.type
+        when PM_TYPE_32
+          atom.l
+        when PM_TYPE_U32
+          atom.ul
+        when PM_TYPE_64
+          atom.ll
+        when PM_TYPE_U64
+          atom.ull
+        when PM_TYPE_FLOAT
+          atom.f
+        when PM_TYPE_DOUBLE
+          atom.d
+        when PM_TYPE_STRING
+          str = atom.cp.read_string
+          LibC.free(atom.cp) if atom.cp
+          str
+        when PM_TYPE_AGGREGATE || PM_TYPE_EVENT || PM_TYPE_HIGHRES_EVENT
+          # No support, make sure we free the pointer
+          LibC.free(atom.vbp) if atom.vbp
+          raise ArgumentError.new "Type #{pm_desc.type} is not supported"
+        else
+          raise ArgumentError.new "Type #{pm_desc.type} not valid"
+      end
+    end
+
     private
 
     def pmUseContext
@@ -121,9 +169,6 @@ module PCPEasy
       proc { FFIInternal.pmDestroyContext(context) }
     end
 
-
   end
-
-
 
 end
