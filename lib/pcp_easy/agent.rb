@@ -21,10 +21,13 @@ module PCPEasy
         value = pmapi.pmExtractValue(metric_vset.valfmt, pm_desc, metric_vset.vlist.first)
         metric_values = [PCPEasy::Metric::Value.new(value, nil)]
       else
-        metric_values = []
+        indoms = pmapi.pmGetInDom(pm_desc.indom)
+        metric_vset = pm_result.vset.first
+        metric_values = metric_vset.vlist.collect do |v|
+          value = pmapi.pmExtractValue(metric_vset.valfmt, pm_desc, v)
+          PCPEasy::Metric::Value.new(value, indoms[v.inst])
+        end
       end
-
-
       PCPEasy::Metric.new(name, pm_desc, metric_values)
     end
 

@@ -31,14 +31,14 @@ describe PCPEasy::Agent do
       end
     end
 
-    # describe 'multiple instances' do
-    #   let(:metrics) { agent.metric('sample.many.int') }
-    #
-    #   it 'should contain the first metric' do
-    #     expected_value = PCPEasy::Metric::Value.new(0, 'i-0')
-    #     expect(metrics.values).to include(expected_value)
-    #   end
-    # end
+    describe 'multiple instances' do
+      let(:metrics) { agent.metric('sample.many.int') }
+
+      it 'should contain the first metric' do
+        expected_value = PCPEasy::Metric::Value.new(0, 'i-0')
+        expect(metrics.values).to include(expected_value)
+      end
+    end
   end
   #
   # describe '#metrics' do
