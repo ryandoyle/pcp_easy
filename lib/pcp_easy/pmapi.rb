@@ -62,6 +62,23 @@ module PCPEasy
     PM_SEM_INSTANT  = 3
     PM_SEM_DISCRETE = 4
 
+    PM_SPACE_BYTE = 0
+    PM_SPACE_KBYTE = 1
+    PM_SPACE_MBYTE = 2
+    PM_SPACE_GBYTE = 3
+    PM_SPACE_TBYTE = 4
+    PM_SPACE_PBYTE = 5
+    PM_SPACE_EBYTE = 6
+
+    PM_TIME_NSEC = 0
+    PM_TIME_USEC = 1
+    PM_TIME_MSEC = 2
+    PM_TIME_SEC = 3
+    PM_TIME_MIN = 4
+    PM_TIME_HOUR = 5
+
+    PM_COUNT_ONE = 0
+
     def_delegator self, :pmExtractValue
 
     def initialize(host)
