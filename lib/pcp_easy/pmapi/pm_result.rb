@@ -12,7 +12,9 @@ module PCPEasy
              # pointer to start of PmValueSet
 
       def vset
-        numpmid.times.collect {|n| PmValueSet.new(start_of_vset.get_pointer(n)) }
+        numpmid.times.collect do |n|
+          PmValueSet.new((start_of_vset + FFI::Pointer.size * n).get_pointer(0))
+        end
       end
 
       def numpmid

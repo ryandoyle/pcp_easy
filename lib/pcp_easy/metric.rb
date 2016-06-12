@@ -99,6 +99,10 @@ module PCPEasy
       end
     end
 
+    def inspect
+      "<#{self.class.to_s} name=#{name} values=#{values} semantics=#{semantics} type=#{type} units=#{units}>"
+    end
+
     private
 
     def count_unit(exponent)

@@ -14,6 +14,10 @@ describe PCPEasy::Agent do
     describe 'a single instance' do
       let(:metric) { agent.metric('sample.long.ten') }
 
+      it 'should have the correct name' do
+        expect(metric.name).to eq 'sample.long.ten'
+      end
+
       it 'should return the correct value' do
         expect(metric.values.first.value).to eq 10
       end
@@ -41,16 +45,16 @@ describe PCPEasy::Agent do
     end
   end
   #
-  # describe '#metrics' do
-  #   it 'should raise an error if not passed an array' do
-  #     expect{agent.metrics('somestring')}.to raise_error ArgumentError
-  #   end
-  #   it 'should raise an error if the array does not contain strings' do
-  #     expect{agent.metrics([1,2])}.to raise_error ArgumentError
-  #   end
-  #   it 'should return multiple metrics if multiple metrics are queried for' do
-  #     expect(agent.metrics(['sample.long.ten', 'sample.many.int']).length).to eq 2
-  #   end
-  # end
+  describe '#metrics' do
+    it 'should raise an error if not passed an array' do
+      expect{agent.metrics('somestring')}.to raise_error ArgumentError
+    end
+    it 'should raise an error if the array does not contain strings' do
+      expect{agent.metrics([1,2])}.to raise_error TypeError
+    end
+    it 'should return multiple metrics if multiple metrics are queried for' do
+      expect(agent.metrics(['sample.long.ten', 'sample.many.int']).length).to eq 2
+    end
+  end
 
 end
