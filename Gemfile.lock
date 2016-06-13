@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    pcp_easy (2.0.0)
+    pcp_easy (0.4.0)
       ffi
 
 GEM
@@ -33,6 +33,3 @@ DEPENDENCIES
   rake
   rspec
   yard
-
-BUNDLED WITH
-   1.11.2
