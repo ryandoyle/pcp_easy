@@ -1,7 +1,7 @@
 # pcp_easy
 `pcp_easy` provides a simple Ruby API to query metrics from a remote [Performance Co-Pilot] \(PCP\) daemon.
 ## Install
-Written as a native extension, it requires PCP development headers to be present on the system.
+`pcp_easy` version 0.4.0+ uses the Ruby `ffi` gem to call into native `libpcp`. Compilation and development headers are not required.
 ```sh
 gem install pcp_easy
 ```
@@ -28,14 +28,14 @@ puts metric.inspect
 metrics = agent.metric('disk.partitions.read')
 puts metrics.inspect
 #<PCPEasy::Metric:0x00560b04bd4c40
-#  @name="disk.partitions.read",
-#  @values=[
+#  name="disk.partitions.read",
+#  values=[
 #    <PCPEasy::Metric::Value:0x007f05b2b21920 @value=177, @instance="sda1">,
 #    <PCPEasy::Metric::Value:0x007f05b2b218d0 @value=115805, @instance="sda5>,
 #  ],
-#  @semantics=:counter,
-#  @type=:uint64,
-#  @units={:dimension=>:count, :count_scaling=>0}>,
+#  semantics=:counter,
+#  type=:uint64,
+#  units={:dimension=>:count, :count_scaling=>0}>,
 ```
 
 All `pcp_easy` exceptions extend from `PCPEasy::Error`. There is a one-to-one mapping of PCP errors
@@ -72,7 +72,7 @@ The following is an example for a Debian-based system.
 
 ```sh
 # Install development headers for pcp & ruby
-apt-get install pcp libpcp3-dev libpcp-pmda3-dev ruby-dev
+apt-get install pcp ruby-dev
 
 # Install the sample PMDA
 cd /var/lib/pcp/pmdas/sample/
@@ -80,8 +80,8 @@ echo | sudo ./Install
 cd
 
 # Checkout the code and install dependencies
-git clone https://github.com/ryandoyle/pcp_easy-ruby.git
-cd pcp_easy-ruby
+git clone https://github.com/ryandoyle/pcp_easy.git
+cd pcp_easy
 gem install bundler
 bundle install
 
