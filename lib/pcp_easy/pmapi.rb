@@ -1,4 +1,5 @@
 require 'ffi'
+require 'forwardable'
 require 'pcp_easy/error'
 require 'pcp_easy/pmapi/pm_desc'
 require 'pcp_easy/pmapi/pm_result'
