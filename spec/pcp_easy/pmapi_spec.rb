@@ -57,7 +57,7 @@ describe PCPEasy::PMAPI, :group => :integration do
       expect(pmapi.pmGetInDom(sample_many_int_indom)).to eq 0 => 'i-0', 1 => 'i-1', 2 => 'i-2', 3 => 'i-3', 4 => 'i-4'
     end
     it 'raises an error for invalid indomns' do
-      expect{pmapi.pmGetInDom(123)}.to raise_error PCPEasy::Error
+      expect{pmapi.pmGetInDom(123)}.to raise_error PCPEasy::Error::InDomError
     end
   end
 
@@ -91,7 +91,7 @@ describe PCPEasy::PMAPI, :group => :integration do
       expect(value_for(sample_string_hullo)).to eq 'hullo world!'
     end
     it 'raises an error for other types' do
-      expect{value_for(sample_aggregate_hullo)}.to raise_error ArgumentError
+      expect{value_for(sample_aggregate_hullo)}.to raise_error PCPEasy::Error
     end
   end
 
@@ -151,7 +151,7 @@ describe PCPEasy::PMAPI do
       pm_atom_value = double('PmAtomValue', :vbp => nil, :pointer => nil)
       allow(PCPEasy::PMAPI::PmAtomValue).to receive(:new).and_return pm_atom_value
 
-      expect{described_class.pmExtractValue(PCPEasy::PMAPI::PM_VAL_DPTR, pm_desc, pm_value)}.to raise_error ArgumentError
+      expect{described_class.pmExtractValue(PCPEasy::PMAPI::PM_VAL_DPTR, pm_desc, pm_value)}.to raise_error PCPEasy::Error
     end
     it 'frees any pmValueBlock' do
       pm_desc = double('PmDesc', :type => PCPEasy::PMAPI::PM_TYPE_AGGREGATE)
@@ -164,7 +164,7 @@ describe PCPEasy::PMAPI do
 
       begin
       described_class.pmExtractValue(PCPEasy::PMAPI::PM_VAL_DPTR, pm_desc, pm_value)
-      rescue ArgumentError
+      rescue PCPEasy::Error
       end
 
     end
