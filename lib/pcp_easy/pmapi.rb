@@ -9,7 +9,7 @@ require 'pcp_easy/pmapi/pm_atom_value'
 module PCPEasy
   module FFIInternal
     extend FFI::Library
-    ffi_lib 'libpcp.so.3'
+    ffi_lib 'libpcp'
 
     typedef :uint, :pmid
     typedef :uint, :indom
