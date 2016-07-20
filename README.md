@@ -17,17 +17,17 @@ agent = PCPEasy::Agent.new('localhost')
 # Metrics that have no instances return a single element array of values
 metric = agent.metric('disk.all.read')
 puts metric.inspect
-#<PCPEasy::Metric:0x00560b04bd5050
+#<PCPEasy::Metric
 #  @name="disk.all.read",
 #  @values=[<PCPEasy::Metric::Value:0x007f05b2b21970 @value=116044, @instance=nil>],
 #  @semantics=:counter,
 #  @type=:uint64
-#  @units={:dimension=>:count, :count_scaling=>0}>
+#  @units={:domain=>:count0, :range=>nil}>
 
 # Metrics that have instances return an array of values
 metrics = agent.metric('disk.partitions.read')
 puts metrics.inspect
-#<PCPEasy::Metric:0x00560b04bd4c40
+#<PCPEasy::Metric
 #  name="disk.partitions.read",
 #  values=[
 #    <PCPEasy::Metric::Value:0x007f05b2b21920 @value=177, @instance="sda1">,
@@ -35,11 +35,11 @@ puts metrics.inspect
 #  ],
 #  semantics=:counter,
 #  type=:uint64,
-#  units={:dimension=>:count, :count_scaling=>0}>,
+#  units={:domain=>:count0, :range=>nil}>,
 ```
 
 All `pcp_easy` exceptions extend from `PCPEasy::Error`. There is a one-to-one mapping of PCP errors
-to error classes (see: `exceptions.c`).
+to error classes (see: `lib/pcp_easy/error.rb`).
 
 ```ruby
 require 'pcp_easy'
@@ -48,9 +48,8 @@ agent = PCPEasy::Agent.new('localhost')
 begin
   agent.metric('not.a.metric')
   # raises PCPEasy::NameError
-rescue PCPEasy::Error
-  puts 'could not query for metric'
-  # "could not query for metric"
+rescue PCPEasy::NameError
+  puts 'could not query for metric with unknown name'
 end
 
 ```
@@ -71,8 +70,8 @@ and running with the `sample` PMDA installed.
 The following is an example for a Debian-based system.
 
 ```sh
-# Install development headers for pcp & ruby
-apt-get install pcp ruby-dev
+# Install pcp & ruby
+apt-get install pcp ruby
 
 # Install the sample PMDA
 cd /var/lib/pcp/pmdas/sample/
